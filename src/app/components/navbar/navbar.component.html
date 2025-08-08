@@ -1,0 +1,13 @@
+<nav class="nav">
+  <div class="brand">Admin Panel</div>
+
+  <ul class="tabs">
+    <li *ngFor="let t of tabs"
+        [class.active]="active === t.key"
+        (click)="tabChange.emit(t.key)">
+      {{ t.label }}
+    </li>
+  </ul>
+
+  <button class="logout" (click)="logout.emit()">Logout</button>
+</nav>

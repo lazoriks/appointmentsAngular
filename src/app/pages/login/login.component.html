@@ -1,0 +1,17 @@
+<div class="login-wrapper">
+  <div class="card">
+    <h2>Admin Login</h2>
+    <div class="field">
+      <label>Username</label>
+      <input [(ngModel)]="username" placeholder="admin" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input [(ngModel)]="password" type="password" placeholder="••••••••" />
+    </div>
+
+    <button (click)="login()">Login</button>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </div>
+</div>

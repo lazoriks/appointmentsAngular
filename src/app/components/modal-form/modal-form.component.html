@@ -1,0 +1,20 @@
+<div class="overlay" *ngIf="visible">
+  <div class="modal">
+    <h3>{{ title }}</h3>
+
+    <div class="form">
+      <div class="row" *ngFor="let f of fields">
+        <label>{{ f.label }}</label>
+        <input
+          [type]="f.type || 'text'"
+          [(ngModel)]="model[f.key]"
+        />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="ghost" (click)="cancel.emit()">Cancel</button>
+      <button class="primary" (click)="save.emit(model)">Save</button>
+    </div>
+  </div>
+</div>

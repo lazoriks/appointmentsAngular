@@ -1,5 +1,7 @@
 export interface Master {
-  id: number;
+  id?: number;
   firstName: string;
-  surname?: string;
+  surname: string;
+  groupServiceId?: number;
+  email?: string;
 }

@@ -1,0 +1,21 @@
+.login-wrapper {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #faf7f6;
+}
+.card {
+  width: 320px;
+  background: #fff;
+  padding: 22px 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0,0,0,.08);
+}
+h2 { margin: 0 0 16px; }
+.field { margin-bottom: 12px; display: grid; gap: 6px; }
+input { padding: 10px 12px; border: 1px solid #e6d5da; border-radius: 8px; }
+button {
+  width: 100%; padding: 10px 12px; border: 0;
+  border-radius: 999px; background: #111; color: #fff;
+}
+.error { margin-top: 10px; color: #c0392b; }

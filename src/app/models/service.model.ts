@@ -1,7 +1,8 @@
 export interface Service {
-  id: number;
+  id?: number;
   serviceName: string;
-  description?: string;
   price: number;
   period: number;
+  description?: string;
+  groupServiceId?: number;
 }

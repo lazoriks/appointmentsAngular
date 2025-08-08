@@ -1,0 +1,12 @@
+<app-navbar
+  [active]="active"
+  (tabChange)="setTab($event)"
+  (logout)="logout()"
+></app-navbar>
+
+<div class="container">
+  <app-appointments-table *ngIf="active === 'appointments'"></app-appointments-table>
+  <app-services-table *ngIf="active === 'services'"></app-services-table>
+  <app-masters-table *ngIf="active === 'masters'"></app-masters-table>
+  <app-clients-table *ngIf="active === 'clients'"></app-clients-table>
+</div>
