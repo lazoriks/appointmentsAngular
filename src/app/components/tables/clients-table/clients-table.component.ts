@@ -1,59 +1,44 @@
 import { Component } from '@angular/core';
+import { NgFor } from '@angular/common';
 import { AdminService } from '../../../services/admin.service';
 import { Client } from '../../../models/client.model';
 
 @Component({
+  standalone: true,
   selector: 'app-clients-table',
-  templateUrl: './clients-table.component.html',
+  imports: [NgFor],
   styleUrls: ['./clients-table.component.scss'],
+  template: `
+    <div class="card" style="margin-bottom:12px;">
+      <button class="btn danger" (click)="refresh()">Refresh</button>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Mobile</th><th>Email</th><th>GoogleID</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of rows; index as i">
+            <td>{{i+1}}</td>
+            <td>{{c.firstName}} {{c.surname}}</td>
+            <td>{{c.mobile}}</td>
+            <td>{{c.email || '-'}}</td>
+            <td>{{c.googleId || '-'}}</td>
+            <td>
+              <button class="btn danger" (click)="del(c.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `
 })
 export class ClientsTableComponent {
   rows: Client[] = [];
-  loading = false;
-
-  modalVisible = false;
-  modalModel: any = {};
-  fields = [
-    { key: 'firstName', label: 'First Name' },
-    { key: 'surname', label: 'Surname' },
-    { key: 'mobile', label: 'Mobile' },
-    { key: 'email', label: 'Email', type: 'email' },
-    { key: 'googleId', label: 'Google ID' },
-  ];
-
-  constructor(private api: AdminService) {
-    this.fetch();
-  }
-
-  fetch() {
-    this.loading = true;
-    this.api.getClients().subscribe({
-      next: (data) => { this.rows = data; this.loading = false; },
-      error: () => { this.rows = []; this.loading = false; }
-    });
-  }
-
-  openAdd() {
-    this.modalModel = { firstName: '', surname: '', mobile: '', email: '', googleId: '' };
-    this.modalVisible = true;
-  }
-
-  openEdit(row: Client) {
-    this.modalModel = { ...row };
-    this.modalVisible = true;
-  }
-
-  save(model: Client) {
-    this.api.saveClient(model).subscribe({
-      next: () => { this.modalVisible = false; this.fetch(); }
-    });
-  }
-
-  delete(row: Client) {
-    if (!row.id) return;
+  constructor(private api: AdminService) { this.refresh(); }
+  refresh() { this.api.getClients().subscribe({ next: d => this.rows = d }); }
+  del(id: number) {
     if (!confirm('Delete client?')) return;
-    this.api.deleteClient(row.id).subscribe({
-      next: () => this.fetch()
-    });
+    this.api.deleteClient(id).subscribe({ next: () => this.refresh() });
   }
 }

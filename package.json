@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:admin-panel": "node dist/admin-panel/server/server.mjs"
+    "serve:ssr:admin-panel": "node dist/admin-panel/server/server.mjs",
+    "build-css": "sass src/styles.scss dist/styles.css"
   },
   "prettier": {
     "overrides": [

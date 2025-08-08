@@ -1,30 +1,40 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, signal, computed } from '@angular/core';
+import { AppointmentsTableComponent } from '../../components/tables/appointments-table/appointments-table.component';
+import { ClientsTableComponent } from '../../components/tables/clients-table/clients-table.component';
+import { MastersTableComponent } from '../../components/tables/masters-table/masters-table.component';
+import { ServicesTableComponent } from '../../components/tables/services-table/services-table.component';
 
-type TabKey = 'appointments' | 'services' | 'masters' | 'clients';
+type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
 
 @Component({
+  standalone: true,
   selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
+  imports: [
+    AppointmentsTableComponent,
+    ClientsTableComponent,
+    MastersTableComponent,
+    ServicesTableComponent
+  ],
+  template: `
+    <div class="card">
+      <div class="tabs">
+        <div class="tab" [class.active]="tab() === 'appointments'" (click)="setTab('appointments')">Appointments</div>
+        <div class="tab" [class.active]="tab() === 'clients'" (click)="setTab('clients')">Clients</div>
+        <div class="tab" [class.active]="tab() === 'masters'" (click)="setTab('masters')">Masters</div>
+        <div class="tab" [class.active]="tab() === 'services'" (click)="setTab('services')">Services</div>
+      </div>
+
+      <ng-container [ngSwitch]="tab()">
+        <app-appointments-table *ngSwitchCase="'appointments'"></app-appointments-table>
+        <app-clients-table *ngSwitchCase="'clients'"></app-clients-table>
+        <app-masters-table *ngSwitchCase="'masters'"></app-masters-table>
+        <app-services-table *ngSwitchCase="'services'"></app-services-table>
+      </ng-container>
+    </div>
+  `
 })
 export class DashboardComponent {
-  active: TabKey = 'appointments';
-
-  constructor(private router: Router) {}
-
-  ngOnInit() {
-    if (sessionStorage.getItem('admin_auth') !== 'true') {
-      this.router.navigate(['/']);
-    }
-  }
-
-  setTab(tab: TabKey) {
-    this.active = tab;
-  }
-
-  logout() {
-    sessionStorage.removeItem('admin_auth');
-    this.router.navigate(['/']);
-  }
+  private _tab = signal<TabKey>('appointments');
+  tab = computed(() => this._tab());
+  setTab(t: TabKey) { this._tab.set(t); }
 }

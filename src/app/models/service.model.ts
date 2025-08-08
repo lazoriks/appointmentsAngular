@@ -1,5 +1,5 @@
-export interface Service {
-  id?: number;
+export interface ServiceModel {
+  id: number;
   serviceName: string;
   price: number;
   period: number;

@@ -1,18 +1,8 @@
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.4);
-  display: grid; place-items: center; z-index: 1000;
+  position: fixed; inset: 0; background: rgba(0,0,0,.3);
 }
 .modal {
-  width: min(520px, 92vw);
-  background: #fff; border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.2);
-  padding: 16px;
+  position: fixed; left: 50%; top: 10vh; transform: translateX(-50%);
+  width: min(640px, 95vw);
+  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee;
 }
-h3 { margin: 0 0 10px; }
-.form { display: grid; gap: 10px; margin-top: 6px; }
-.row { display: grid; gap: 6px; }
-input { padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; }
-.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
-button { padding: 8px 12px; border-radius: 8px; border: 0; }
-button.ghost { background: #f3f3f3; }
-button.primary { background: #111; color: #fff; }

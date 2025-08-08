@@ -1,56 +1,52 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Appointment } from '../models/appointment.model';
-import { Service } from '../models/service.model';
-import { Master } from '../models/master.model';
 import { Client } from '../models/client.model';
+import { Master } from '../models/master.model';
+import { ServiceModel } from '../models/service.model';
 import { Observable } from 'rxjs';
+
+const BASE = 'https://appointmentspring-206160864813.us-central1.run.app/api/admin';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  // 🔧 Change if you host backend elsewhere
-  private base = 'https://appointmentspring-206160864813.us-central1.run.app/api/admin';
-
   constructor(private http: HttpClient) {}
 
-  // Appointments
+  // appointments
   getAppointments(from?: string, to?: string): Observable<Appointment[]> {
     let params = new HttpParams();
     if (from) params = params.set('from', from);
     if (to) params = params.set('to', to);
-    return this.http.get<Appointment[]>(`${this.base}/appointments`, { params });
+    return this.http.get<Appointment[]>(`${BASE}/appointments`, { params });
   }
 
-  // Services
-  getServices(): Observable<Service[]> {
-    return this.http.get<Service[]>(`${this.base}/services`);
+  // services
+  getServices(): Observable<ServiceModel[]> {
+    return this.http.get<ServiceModel[]>(`${BASE}/services`);
   }
-  saveService(payload: Service): Observable<Service> {
-    return this.http.post<Service>(`${this.base}/services`, payload);
+  saveService(svc: ServiceModel): Observable<ServiceModel> {
+    return this.http.post<ServiceModel>(`${BASE}/services`, svc);
   }
   deleteService(id: number) {
-    return this.http.delete(`${this.base}/services/${id}`);
+    return this.http.delete(`${BASE}/services/${id}`);
   }
 
-  // Masters
+  // masters
   getMasters(): Observable<Master[]> {
-    return this.http.get<Master[]>(`${this.base}/masters`);
+    return this.http.get<Master[]>(`${BASE}/masters`);
   }
-  saveMaster(payload: Master): Observable<Master> {
-    return this.http.post<Master>(`${this.base}/masters`, payload);
+  saveMaster(m: Master): Observable<Master> {
+    return this.http.post<Master>(`${BASE}/masters`, m);
   }
   deleteMaster(id: number) {
-    return this.http.delete(`${this.base}/masters/${id}`);
+    return this.http.delete(`${BASE}/masters/${id}`);
   }
 
-  // Clients
+  // clients
   getClients(): Observable<Client[]> {
-    return this.http.get<Client[]>(`${this.base}/clients`);
-  }
-  saveClient(payload: Client): Observable<Client> {
-    return this.http.post<Client>(`${this.base}/clients`, payload);
+    return this.http.get<Client[]>(`${BASE}/clients`);
   }
   deleteClient(id: number) {
-    return this.http.delete(`${this.base}/clients/${id}`);
+    return this.http.delete(`${BASE}/clients/${id}`);
   }
 }
