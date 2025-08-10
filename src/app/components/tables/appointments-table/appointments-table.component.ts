@@ -3,11 +3,12 @@ import { NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
 import { Appointment } from '../../../models/appointment.model';
+import { CommonModule } from '@angular/common';
 
 @Component({
   standalone: true,
   selector: 'app-appointments-table',
-  imports: [NgFor, FormsModule],
+  imports: [NgFor, FormsModule, CommonModule],
   styleUrls: ['./appointments-table.component.scss'],
   template: `
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">

@@ -27,7 +27,7 @@ export interface FieldConfig {
           [type]="f.type || 'text'"
           [(ngModel)]="model[f.key]"
           [name]="f.key"
-          [required]="f.required"
+          [attr.required]="f.required ? '' : null"
         />
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">

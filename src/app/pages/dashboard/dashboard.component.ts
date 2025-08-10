@@ -3,6 +3,7 @@ import { AppointmentsTableComponent } from '../../components/tables/appointments
 import { ClientsTableComponent } from '../../components/tables/clients-table/clients-table.component';
 import { MastersTableComponent } from '../../components/tables/masters-table/masters-table.component';
 import { ServicesTableComponent } from '../../components/tables/services-table/services-table.component';
+import { CommonModule } from '@angular/common';
 
 type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
 
@@ -10,6 +11,7 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
   standalone: true,
   selector: 'app-dashboard',
   imports: [
+    CommonModule,
     AppointmentsTableComponent,
     ClientsTableComponent,
     MastersTableComponent,
