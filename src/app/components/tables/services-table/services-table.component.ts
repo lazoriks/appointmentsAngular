@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { AdminService } from '../../../services/admin.service';
 import { ServiceModel } from '../../../models/service.model';
 import { ModalFormComponent, FieldConfig } from '../../modal-form/modal-form.component';
@@ -7,7 +7,7 @@ import { ModalFormComponent, FieldConfig } from '../../modal-form/modal-form.com
 @Component({
   standalone: true,
   selector: 'app-services-table',
-  imports: [NgFor, ModalFormComponent],
+  imports: [NgFor, NgIf, ModalFormComponent],
   styleUrls: ['./services-table.component.scss'],
   template: `
     <div class="card" style="margin-bottom:12px;">
