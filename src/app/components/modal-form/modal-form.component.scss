@@ -1,8 +1,19 @@
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.3);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000; /* <– test size modal window*/
 }
+
 .modal {
-  position: fixed; left: 50%; top: 10vh; transform: translateX(-50%);
+  position: fixed;
+  left: 50%;
+  top: 10vh;
+  transform: translateX(-50%);
   width: min(640px, 95vw);
-  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #eee;
+  z-index: 1001; /* <– test size modal window */
 }
