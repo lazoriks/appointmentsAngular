@@ -1,19 +1,113 @@
+/* Темний фон поверх усієї сторінки */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 1000; /* <– test size modal window*/
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.25s forwards;
 }
 
+/* Біле вікно по центру */
 .modal {
   position: fixed;
+  top: 50%;
   left: 50%;
-  top: 10vh;
-  transform: translateX(-50%);
-  width: min(640px, 95vw);
+  transform: translate(-50%, -50%) scale(0.95);
   background: #fff;
   border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #eee;
-  z-index: 1001; /* <– test size modal window */
+  padding: 20px 24px;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  width: min(600px, 95vw);
+  opacity: 0;
+  animation: popIn 0.25s forwards;
+}
+
+/* Заголовок */
+.modal h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Поля форми */
+.modal form div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #0078d7;
+}
+
+/* Кнопки */
+.btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn.primary {
+  background: #0078d7;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #005fa3;
+}
+
+.btn:hover {
+  background: #f1f1f1;
+}
+
+/* Анімації */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Адаптивність */
+@media (max-width: 480px) {
+  .modal {
+    padding: 16px;
+    border-radius: 10px;
+  }
+  .modal h3 {
+    font-size: 1.1rem;
+  }
 }
