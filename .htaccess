@@ -6,3 +6,10 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /admin-panel/index.html [L]
 </IfModule>
+
+# Allow access
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+Options -Indexes

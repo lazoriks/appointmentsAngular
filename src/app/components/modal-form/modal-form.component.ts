@@ -19,7 +19,7 @@ export interface FieldConfig {
     <div class="modal">
       <h3>{{ title }}</h3>
       <form (ngSubmit)="submit()">
-        @for (let f of fields; track f.key) {
+        @for (f of fields; track f.key) {
           <div>
             <label>{{ f.label }}</label>
             <input
