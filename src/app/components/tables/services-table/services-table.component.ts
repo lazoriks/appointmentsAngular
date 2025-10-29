@@ -61,8 +61,8 @@ export class ServicesTableComponent {
 
   constructor(private api: AdminService) { this.refresh(); }
   refresh() { this.api.getServices().subscribe({ next: d => this.rows = d }); }
-  openAdd() { this.editModel = {}; this.modalOpen = true; }
-  openEdit(s: ServiceModel) { this.editModel = { ...s }; this.modalOpen = true; }
+  openAdd() { console.log('openAdd called'); this.editModel = {}; this.modalOpen = true; }
+  openEdit(s: ServiceModel) {console.log('openEdit called'); this.editModel = { ...s }; this.modalOpen = true; }
   save(model: any) {
     this.api.saveService(model).subscribe({
       next: () => { this.modalOpen = false; this.refresh(); }
