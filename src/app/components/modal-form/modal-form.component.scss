@@ -1,4 +1,4 @@
-/* Темний фон поверх усієї сторінки */
+/* Темний фон поверх всього екрану */
 .overlay {
   position: fixed;
   inset: 0;
@@ -9,7 +9,7 @@
   animation: fadeIn 0.25s forwards;
 }
 
-/* Біле вікно по центру */
+/* Біле модальне вікно по центру */
 .modal {
   position: fixed;
   top: 50%;
@@ -26,7 +26,7 @@
   animation: popIn 0.25s forwards;
 }
 
-/* Заголовок */
+/* Заголовок модалки */
 .modal h3 {
   margin: 0 0 16px 0;
   font-size: 1.3rem;
