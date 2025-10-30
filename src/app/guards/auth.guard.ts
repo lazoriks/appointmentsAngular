@@ -5,9 +5,17 @@ import { AuthService } from '../services/auth.service';
 export const canActivateAuth: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isAuthenticated()) {
+
+  try {
+    // якщо сервіс каже, що користувач НЕ автентифікований → перекидаємо на логін
+    if (!auth.isAuthenticated()) {
+      router.navigate(['/login']);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('AuthGuard error:', err);
     router.navigate(['/login']);
     return false;
   }
-  return true;
 };

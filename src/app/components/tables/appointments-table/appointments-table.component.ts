@@ -1,64 +1,100 @@
-import { Component } from '@angular/core';
-import { NgFor } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../services/admin.service';
-import { Appointment } from '../../../models/appointment.model';
-import { CommonModule } from '@angular/common';
 
 @Component({
   standalone: true,
   selector: 'app-appointments-table',
-  imports: [NgFor, FormsModule, CommonModule],
+  imports: [],
   styleUrls: ['./appointments-table.component.scss'],
   template: `
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
-      <div>
-        <label>From</label>
-        <input class="input" type="date" [(ngModel)]="fromDate" (change)="load()" />
-      </div>
-      <div>
-        <label>To</label>
-        <input class="input" type="date" [(ngModel)]="toDate" (change)="load()" />
-      </div>
-      <button class="btn" (click)="load()">Filter</button>
+    <div class="card" style="margin-bottom:12px;">
+      <button class="btn primary" (click)="openAdd()">Add Appointment</button>
+      <button class="btn" (click)="refresh()">Refresh</button>
     </div>
 
     <div class="card">
       <table class="table">
         <thead>
-          <tr>
-            <th>#</th><th>Date/Time</th><th>Client</th><th>Master</th><th>Sum</th><th>Services</th>
-          </tr>
+          <tr><th>#</th><th>Client</th><th>Master</th><th>Service</th><th>Start</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of rows; index as i">
-            <td>{{i+1}}</td>
-            <td>{{a.datatime}}</td>
-            <td>{{a.client?.firstName}} {{a.client?.surname}}</td>
-            <td>{{a.master?.firstName}} {{a.master?.surname}}</td>
-            <td>{{a.summ || '-'}}</td>
-            <td>
-              <ng-container *ngFor="let s of a.services; let last = last">
-                {{s.serviceName}} ({{s.price}}) <span *ngIf="!last">, </span>
-              </ng-container>
-            </td>
-          </tr>
+          @for (a of rows; track a.id) {
+            <tr>
+              <td>{{ rows.indexOf(a) + 1 }}</td>
+              <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
+              <td>{{ a.master?.firstName }} {{ a.master?.surname }}</td>
+              <td>{{ a.service?.serviceName }}</td>
+              <td>{{ a.startTime }}</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
   `
 })
-export class AppointmentsTableComponent {
-  rows: Appointment[] = [];
-  fromDate = new Date().toISOString().split('T')[0];
-  toDate = new Date().toISOString().split('T')[0];
+export class AppointmentsTableComponent implements OnInit, OnDestroy {
+  rows: any[] = [];
+  constructor(private api: AdminService) {}
 
-  constructor(private api: AdminService) { this.load(); }
+  ngOnInit() {
+    this.refresh();
+    window.addEventListener('message', this.onMessage);
+  }
+  ngOnDestroy() {
+    window.removeEventListener('message', this.onMessage);
+  }
 
-  load() {
-    this.api.getAppointments(this.fromDate, this.toDate).subscribe({
-      next: (data) => this.rows = data,
-      error: (e) => console.error(e)
-    });
+  refresh() {
+    this.api.getAppointments().subscribe({ next: d => this.rows = d });
+  }
+
+  openAdd() {
+    this.openFormWindow('Add Appointment', {});
+  }
+
+  openEdit(a: any) {
+    this.openFormWindow('Edit Appointment', a);
+  }
+
+  openFormWindow(title: string, data: any) {
+    const win = window.open('', '_blank', 'width=640,height=500');
+    if (!win) return;
+
+    win.document.write(`
+      <html><head><title>${title}</title>
+      <style>body{font-family:sans-serif;padding:20px;}label{display:block;margin-top:10px;}</style></head>
+      <body>
+      <h2>${title}</h2>
+      <form id="form">
+        <label>Client ID</label><input id="clientId" type="number" value="${data.clientId || ''}" required>
+        <label>Master ID</label><input id="masterId" type="number" value="${data.masterId || ''}" required>
+        <label>Service ID</label><input id="serviceId" type="number" value="${data.serviceId || ''}" required>
+        <label>Start Time</label><input id="startTime" type="datetime-local" value="${this.toLocalValue(data.startTime)}" required>
+        <button type="submit">Save</button>
+      </form>
+      <script>
+        const f=document.getElementById('form');
+        f.addEventListener('submit',e=>{
+          e.preventDefault();
+          window.opener.postMessage({type:'refresh-appointments'},'*');
+          window.close();
+        });
+      </script>
+      </body></html>
+    `);
+    win.document.close();
+  }
+
+  toLocalValue(dt: any): string {
+    if (!dt) return '';
+    const d = new Date(dt);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  onMessage = (e: MessageEvent) => {
+    if (e.data?.type === 'refresh-appointments') {
+      this.refresh();
+    }
   }
 }
