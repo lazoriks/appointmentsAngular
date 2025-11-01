@@ -20,6 +20,13 @@ export class AdminService {
     return this.http.get<Appointment[]>(`${BASE}/appointments`, { params });
   }
 
+  saveAppointment(app: Appointment): Observable<Appointment> {
+    return this.http.post<Appointment>(`${BASE}/appointments`, app);
+  }
+  deleteAppointment(id: number) {
+    return this.http.delete(`${BASE}/appointments/${id}`);
+  }
+
   // services
   getServices(): Observable<ServiceModel[]> {
     return this.http.get<ServiceModel[]>(`${BASE}/services`);
