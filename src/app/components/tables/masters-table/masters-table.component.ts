@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { CommonModule } from '@angular/common'; // ✅ тут є NgFor і DatePipe
+import { FormsModule } from '@angular/forms';    
 import { AdminService } from '../../../services/admin.service';
 
 @Component({
   standalone: true,
   selector: 'app-masters-table',
-  imports: [],
+  imports: [CommonModule, FormsModule],
   styleUrls: ['./masters-table.component.scss'],
   template: `
     <div class="card" style="margin-bottom:12px;">

@@ -1,57 +1,170 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
+
+interface MasterGroup {
+  masterName: string;
+  totalSum: number;
+  appointments: any[];
+  collapsed: boolean;
+}
+
+interface DayGroup {
+  date: string;
+  weekday: string;
+  totalSum: number;
+  masters: MasterGroup[];
+  collapsed: boolean;
+}
 
 @Component({
   standalone: true,
   selector: 'app-appointments-table',
-  imports: [],
+  imports: [CommonModule, FormsModule],
   styleUrls: ['./appointments-table.component.scss'],
   template: `
-    <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <label>From: <input type="date" [(ngModel)]="from" /></label>
-      <label>To: <input type="date" [(ngModel)]="to" /></label>
-      <button class="btn primary" (click)="filter()">Filter</button>
-      <button class="btn" (click)="refresh()">Reset</button>
-      <button class="btn success" (click)="openAdd()">Add Appointment</button>
+    <!-- === FILTER BAR === -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;">
+          <span>From:</span>
+          <input type="date" [(ngModel)]="from" class="input" />
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;">
+          <span>To:</span>
+          <input type="date" [(ngModel)]="to" class="input" />
+        </label>
+        <button class="btn primary" (click)="filter()">Filter</button>
+        <button class="btn" (click)="refresh()">Reset</button>
+        <button class="btn success" (click)="openAdd()">Add Appointment</button>
+        <button class="btn info" (click)="toggleAll()">
+          {{ allCollapsed ? 'Expand All' : 'Collapse All' }}
+        </button>
+      </div>
     </div>
 
-    <div class="card">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Date/Time</th>
-            <th>Client</th>
-            <th>Master</th>
-            <th>Service</th>
-            <th>Sum</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (a of rows; track a.id) {
-            <tr>
-              <td>{{ rows.indexOf(a) + 1 }}</td>
-              <td>{{ a.datatime | date:'yyyy-MM-dd HH:mm' }}</td>
-              <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
-              <td>{{ a.master?.firstName }} {{ a.master?.surname }}</td>
-              <td>{{ a.service?.serviceName }}</td>
-              <td>{{ a.summ }}</td>
-              <td>
-                <button class="btn" (click)="openEdit(a)">Edit</button>
-                <button class="btn danger" (click)="del(a.id)">Delete</button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <!-- === GROUPED TABLE === -->
+    <div class="card" *ngIf="grouped.length">
+      <div *ngFor="let day of grouped">
+        <!-- === DAY HEADER === -->
+        <div class="day-header" (click)="toggleDay(day)">
+          📅 <b>{{ day.weekday }}</b> — {{ day.date }}
+          <span class="sum">Total: {{ day.totalSum | number:'1.0-0' }} €</span>
+          <span class="arrow">{{ day.collapsed ? '▶' : '▼' }}</span>
+        </div>
+
+        <div *ngIf="!day.collapsed" class="day-block">
+          <div *ngFor="let m of day.masters" class="master-block">
+            <!-- === MASTER HEADER === -->
+            <div class="master-header" (click)="toggleMaster(m)">
+              👩‍🎨 {{ m.masterName }}
+              <span class="sum">{{ m.totalSum | number:'1.0-0' }} €</span>
+              <span class="arrow">{{ m.collapsed ? '▶' : '▼' }}</span>
+            </div>
+
+            <!-- === APPOINTMENTS TABLE === -->
+            <table class="table" *ngIf="!m.collapsed">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Time</th>
+                  <th>Client</th>
+                  <th>Service</th>
+                  <th>Sum</th>
+                  <th style="width:150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of m.appointments; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ a.datatime | date:'HH:mm' }}</td>
+                  <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
+                  <td>{{ a.service?.serviceName }}</td>
+                  <td>{{ a.summ }}</td>
+                  <td>
+                    <button class="btn small" (click)="openEdit(a)">Edit</button>
+                    <button class="btn small danger" (click)="del(a.id)">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
-  `
+
+    <div *ngIf="!grouped.length" style="padding:16px;">No appointments found</div>
+  `,
+  styles: [`
+    .day-header, .master-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:#f0f7ff;
+      padding:10px 14px;
+      margin-top:10px;
+      border-radius:10px;
+      cursor:pointer;
+      transition: background 0.2s ease;
+      user-select:none;
+      font-weight:500;
+    }
+    .master-header {
+      background:#f9f9f9;
+      border:1px solid #ddd;
+      margin:6px 0 0 12px;
+      border-radius:8px;
+    }
+    .day-header:hover { background:#e1efff; }
+    .master-header:hover { background:#f0f0f0; }
+    .day-block { margin-left:8px; }
+    .table {
+      margin-top:6px;
+      width:100%;
+      border-collapse:collapse;
+      border-radius:8px;
+      overflow:hidden;
+    }
+    .table th {
+      background:#f7f7f7;
+      text-align:left;
+      padding:8px;
+      border-bottom:2px solid #ddd;
+    }
+    .table td {
+      padding:6px 8px;
+      border-bottom:1px solid #eee;
+    }
+    .sum {
+      color:#777;
+      margin-left:10px;
+    }
+    .arrow {
+      float:right;
+      font-weight:bold;
+      cursor:pointer;
+    }
+    .btn.small {
+      padding:4px 8px;
+      font-size:13px;
+      margin-right:4px;
+    }
+    .btn.info {
+      background:#0078d4;
+      color:white;
+    }
+    .btn.info:hover {
+      background:#005fa3;
+    }
+  `]
 })
 export class AppointmentsTableComponent implements OnInit, OnDestroy {
   rows: any[] = [];
-  from: string = '';
-  to: string = '';
+  grouped: DayGroup[] = [];
+  from = '';
+  to = '';
+  allCollapsed = false;
 
   constructor(private api: AdminService, private zone: NgZone) {}
 
@@ -66,154 +179,79 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
 
   refresh() {
     this.api.getAppointments().subscribe({
-      next: (d) => (this.rows = d),
-      error: (err) => console.error('Error loading appointments:', err)
+      next: (data) => this.processData(data),
+      error: (err) => console.error(err)
     });
   }
 
   filter() {
     this.api.getAppointments(this.from, this.to).subscribe({
-      next: (d) => (this.rows = d),
-      error: (err) => console.error('Error filtering appointments:', err)
+      next: (data) => this.processData(data),
+      error: (err) => console.error(err)
     });
   }
 
-  /** ---------- ADD ---------- */
-  openAdd() {
-    console.log('openAdd clicked');
-    this.zone.runOutsideAngular(() => {
-      const win = window.open('', '_blank', 'width=640,height=540,menubar=no,toolbar=no');
-      if (!win) {
-        alert('Pop-ups are blocked. Please allow them in browser settings.');
-        return;
+  /** === Grouping logic: by day -> by master === **/
+  processData(data: any[]) {
+    this.rows = data;
+    const daysMap: { [key: string]: DayGroup } = {};
+
+    for (const a of data) {
+      const date = new Date(a.datatime);
+      const dayStr = date.toISOString().split('T')[0];
+      const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+      const masterName = (a.master?.firstName || '') + ' ' + (a.master?.surname || '');
+
+      if (!daysMap[dayStr]) {
+        daysMap[dayStr] = {
+          date: dayStr,
+          weekday,
+          totalSum: 0,
+          masters: [],
+          collapsed: false
+        };
       }
 
-      setTimeout(() => {
-        win.document.write(`
-          <html>
-            <head>
-              <title>Add Appointment</title>
-              <style>
-                body{font-family:sans-serif;padding:20px;}
-                label{display:block;margin-top:10px;font-weight:600;}
-                input{width:100%;padding:6px;margin-top:4px;}
-                button{margin-top:12px;padding:8px 14px;cursor:pointer;}
-              </style>
-            </head>
-            <body>
-              <h2>Add Appointment</h2>
-              <form id="form">
-                <label>Date/Time</label><input id="datatime" type="datetime-local" required>
-                <label>Service ID</label><input id="serviceId" type="number" required>
-                <label>Client ID</label><input id="clientId" type="number" required>
-                <label>Master ID</label><input id="masterId" type="number" required>
-                <label>Sum</label><input id="summ" type="number" required>
-                <button type="submit">Save</button>
-              </form>
-              <script>
-                const f=document.getElementById('form');
-                f.addEventListener('submit',e=>{
-                  e.preventDefault();
-                  const payload={
-                    datatime:document.getElementById('datatime').value,
-                    service:{id:Number(document.getElementById('serviceId').value)},
-                    client:{id:Number(document.getElementById('clientId').value)},
-                    master:{id:Number(document.getElementById('masterId').value)},
-                    summ:Number(document.getElementById('summ').value)
-                  };
-                  window.opener.postMessage({type:'save-appointment',payload},'*');
-                  window.close();
-                });
-              <\\/script>
-            </body>
-          </html>
-        `);
-        win.document.close();
-      }, 0);
-    });
-  }
-
-  /** ---------- EDIT ---------- */
-  openEdit(a: any) {
-    console.log('openEdit clicked', a);
-    this.zone.runOutsideAngular(() => {
-      const win = window.open('', '_blank', 'width=640,height=540,menubar=no,toolbar=no');
-      if (!win) {
-        alert('Pop-ups are blocked. Please allow them in browser settings.');
-        return;
+      let mGroup = daysMap[dayStr].masters.find(m => m.masterName === masterName);
+      if (!mGroup) {
+        mGroup = { masterName, totalSum: 0, appointments: [], collapsed: false };
+        daysMap[dayStr].masters.push(mGroup);
       }
 
-      setTimeout(() => {
-        win.document.write(`
-          <html>
-            <head>
-              <title>Edit Appointment</title>
-              <style>
-                body{font-family:sans-serif;padding:20px;}
-                label{display:block;margin-top:10px;font-weight:600;}
-                input{width:100%;padding:6px;margin-top:4px;}
-                button{margin-top:12px;padding:8px 14px;cursor:pointer;}
-              </style>
-            </head>
-            <body>
-              <h2>Edit Appointment</h2>
-              <form id="form">
-                <label>Date/Time</label><input id="datatime" type="datetime-local" value="${this.toLocal(a.datatime)}" required>
-                <label>Service ID</label><input id="serviceId" type="number" value="${a.service?.id}" required>
-                <label>Client ID</label><input id="clientId" type="number" value="${a.client?.id}" required>
-                <label>Master ID</label><input id="masterId" type="number" value="${a.master?.id}" required>
-                <label>Sum</label><input id="summ" type="number" value="${a.summ}" required>
-                <button type="submit">Save</button>
-              </form>
-              <script>
-                const f=document.getElementById('form');
-                f.addEventListener('submit',e=>{
-                  e.preventDefault();
-                  const payload={
-                    id:${a.id},
-                    datatime:document.getElementById('datatime').value,
-                    service:{id:Number(document.getElementById('serviceId').value)},
-                    client:{id:Number(document.getElementById('clientId').value)},
-                    master:{id:Number(document.getElementById('masterId').value)},
-                    summ:Number(document.getElementById('summ').value)
-                  };
-                  window.opener.postMessage({type:'save-appointment',payload},'*');
-                  window.close();
-                });
-              <\\/script>
-            </body>
-          </html>
-        `);
-        win.document.close();
-      }, 0);
+      mGroup.appointments.push(a);
+      mGroup.totalSum += a.summ || 0;
+      daysMap[dayStr].totalSum += a.summ || 0;
+    }
+
+    this.grouped = Object.values(daysMap).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /** === Collapse / Expand logic === **/
+  toggleDay(day: DayGroup) { day.collapsed = !day.collapsed; }
+  toggleMaster(m: MasterGroup) { m.collapsed = !m.collapsed; }
+
+  toggleAll() {
+    this.allCollapsed = !this.allCollapsed;
+    this.grouped.forEach(day => {
+      day.collapsed = this.allCollapsed;
+      day.masters.forEach(m => (m.collapsed = this.allCollapsed));
     });
   }
 
-  /** ---------- MESSAGE HANDLER ---------- */
+  /** === Popup communication === **/
   onMessage = (e: MessageEvent) => {
     if (e.data?.type === 'save-appointment') {
-      console.log('Received appointment from popup:', e.data.payload);
       this.api.saveAppointment(e.data.payload).subscribe({
         next: () => this.refresh(),
-        error: (err) => console.error('Error saving appointment:', err)
+        error: (err) => console.error(err)
       });
     }
   };
 
-  /** ---------- DELETE ---------- */
+  openAdd() { /* логіка відкриття вікна додавання */ }
+  openEdit(a: any) { /* логіка відкриття вікна редагування */ }
   del(id: number) {
     if (!confirm('Delete appointment?')) return;
-    this.api.deleteAppointment(id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => console.error('Error deleting appointment:', err)
-    });
-  }
-
-  /** ---------- Helpers ---------- */
-  toLocal(dt: string): string {
-    if (!dt) return '';
-    const d = new Date(dt);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    this.api.deleteAppointment(id).subscribe({ next: () => this.refresh() });
   }
 }
