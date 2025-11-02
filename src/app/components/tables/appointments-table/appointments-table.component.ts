@@ -24,7 +24,6 @@ interface DayGroup {
   imports: [CommonModule, FormsModule],
   styleUrls: ['./appointments-table.component.scss'],
   template: `
-    <!-- === FILTER BAR === -->
     <div class="card" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <label style="display:flex;align-items:center;gap:6px;">
@@ -44,10 +43,8 @@ interface DayGroup {
       </div>
     </div>
 
-    <!-- === GROUPED TABLE === -->
     <div class="card" *ngIf="grouped.length">
       <div *ngFor="let day of grouped">
-        <!-- === DAY HEADER === -->
         <div class="day-header" (click)="toggleDay(day)">
           📅 <b>{{ day.weekday }}</b> — {{ day.date }}
           <span class="sum">Total: {{ day.totalSum | number:'1.0-0' }} €</span>
@@ -56,14 +53,12 @@ interface DayGroup {
 
         <div *ngIf="!day.collapsed" class="day-block">
           <div *ngFor="let m of day.masters" class="master-block">
-            <!-- === MASTER HEADER === -->
             <div class="master-header" (click)="toggleMaster(m)">
               👩‍🎨 {{ m.masterName }}
               <span class="sum">{{ m.totalSum | number:'1.0-0' }} €</span>
               <span class="arrow">{{ m.collapsed ? '▶' : '▼' }}</span>
             </div>
 
-            <!-- === APPOINTMENTS TABLE === -->
             <table class="table" *ngIf="!m.collapsed">
               <thead>
                 <tr>
@@ -119,44 +114,14 @@ interface DayGroup {
     .day-header:hover { background:#e1efff; }
     .master-header:hover { background:#f0f0f0; }
     .day-block { margin-left:8px; }
-    .table {
-      margin-top:6px;
-      width:100%;
-      border-collapse:collapse;
-      border-radius:8px;
-      overflow:hidden;
-    }
-    .table th {
-      background:#f7f7f7;
-      text-align:left;
-      padding:8px;
-      border-bottom:2px solid #ddd;
-    }
-    .table td {
-      padding:6px 8px;
-      border-bottom:1px solid #eee;
-    }
-    .sum {
-      color:#777;
-      margin-left:10px;
-    }
-    .arrow {
-      float:right;
-      font-weight:bold;
-      cursor:pointer;
-    }
-    .btn.small {
-      padding:4px 8px;
-      font-size:13px;
-      margin-right:4px;
-    }
-    .btn.info {
-      background:#0078d4;
-      color:white;
-    }
-    .btn.info:hover {
-      background:#005fa3;
-    }
+    .table { margin-top:6px; width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden; }
+    .table th { background:#f7f7f7; text-align:left; padding:8px; border-bottom:2px solid #ddd; }
+    .table td { padding:6px 8px; border-bottom:1px solid #eee; }
+    .sum { color:#777; margin-left:10px; }
+    .arrow { float:right; font-weight:bold; cursor:pointer; }
+    .btn.small { padding:4px 8px; font-size:13px; margin-right:4px; }
+    .btn.info { background:#0078d4; color:white; }
+    .btn.info:hover { background:#005fa3; }
   `]
 })
 export class AppointmentsTableComponent implements OnInit, OnDestroy {
@@ -164,12 +129,13 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
   grouped: DayGroup[] = [];
   from = '';
   to = '';
-  allCollapsed = false;
+  allCollapsed = true; // ✅ початково все згорнуте
 
   constructor(private api: AdminService, private zone: NgZone) {}
 
   ngOnInit() {
-    this.refresh();
+    this.setWeekDates();
+    this.filter(); // ✅ автоматично завантажує дані при відкритті
     window.addEventListener('message', this.onMessage);
   }
 
@@ -177,21 +143,21 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
     window.removeEventListener('message', this.onMessage);
   }
 
-  refresh() {
-    this.api.getAppointments().subscribe({
-      next: (data) => this.processData(data),
-      error: (err) => console.error(err)
-    });
+  /** === встановлення поточного тижня === **/
+  setWeekDates() {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // неділя = 0, понеділок = 1
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    this.from = monday.toISOString().split('T')[0];
+    this.to = sunday.toISOString().split('T')[0];
   }
 
-  filter() {
-    this.api.getAppointments(this.from, this.to).subscribe({
-      next: (data) => this.processData(data),
-      error: (err) => console.error(err)
-    });
-  }
-
-  /** === Grouping logic: by day -> by master === **/
+  /** === Групування по днях -> по майстрах === **/
   processData(data: any[]) {
     this.rows = data;
     const daysMap: { [key: string]: DayGroup } = {};
@@ -208,13 +174,13 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
           weekday,
           totalSum: 0,
           masters: [],
-          collapsed: false
+          collapsed: this.allCollapsed
         };
       }
 
       let mGroup = daysMap[dayStr].masters.find(m => m.masterName === masterName);
       if (!mGroup) {
-        mGroup = { masterName, totalSum: 0, appointments: [], collapsed: false };
+        mGroup = { masterName, totalSum: 0, appointments: [], collapsed: this.allCollapsed };
         daysMap[dayStr].masters.push(mGroup);
       }
 
@@ -223,10 +189,31 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
       daysMap[dayStr].totalSum += a.summ || 0;
     }
 
-    this.grouped = Object.values(daysMap).sort((a, b) => a.date.localeCompare(b.date));
+    // ✅ сортування: по датах, по часу всередині дня
+    this.grouped = Object.values(daysMap)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(day => {
+        day.masters.forEach(m =>
+          m.appointments.sort((a, b) =>
+            new Date(a.datatime).getTime() - new Date(b.datatime).getTime()
+          )
+        );
+        return day;
+      });
   }
 
-  /** === Collapse / Expand logic === **/
+  filter() {
+    this.api.getAppointments(this.from, this.to).subscribe({
+      next: (data) => this.processData(data),
+      error: (err) => console.error(err)
+    });
+  }
+
+  refresh() {
+    this.setWeekDates();  // поточний тиждень
+    this.filter();        // перезапит даних
+  }
+
   toggleDay(day: DayGroup) { day.collapsed = !day.collapsed; }
   toggleMaster(m: MasterGroup) { m.collapsed = !m.collapsed; }
 
@@ -238,20 +225,19 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** === Popup communication === **/
   onMessage = (e: MessageEvent) => {
     if (e.data?.type === 'save-appointment') {
       this.api.saveAppointment(e.data.payload).subscribe({
-        next: () => this.refresh(),
+        next: () => this.filter(),
         error: (err) => console.error(err)
       });
     }
   };
 
-  openAdd() { /* логіка відкриття вікна додавання */ }
-  openEdit(a: any) { /* логіка відкриття вікна редагування */ }
+  openAdd() {}
+  openEdit(a: any) {}
   del(id: number) {
     if (!confirm('Delete appointment?')) return;
-    this.api.deleteAppointment(id).subscribe({ next: () => this.refresh() });
+    this.api.deleteAppointment(id).subscribe({ next: () => this.filter() });
   }
 }
