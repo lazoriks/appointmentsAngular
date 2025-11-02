@@ -234,8 +234,173 @@ export class AppointmentsTableComponent implements OnInit, OnDestroy {
     }
   };
 
-  openAdd() {}
-  openEdit(a: any) {}
+  openAdd() {
+  Promise.all([
+    this.api.getClients().toPromise(),
+    this.api.getMasters().toPromise(),
+    this.api.getServices().toPromise()
+  ]).then(([clients = [], masters = [], services = []]) => {
+    if (!clients || !masters || !services) return;
+
+    const win = window.open('', '_blank', 'width=640,height=600');
+    if (!win) return;
+
+    const today = new Date().toISOString().slice(0, 16);
+
+    const clientOptions = clients!.map((c: any) =>
+      `<option value="${c.id}">${c.firstName} ${c.surname}</option>`).join('');
+    const masterOptions = masters!.map((m: any) =>
+      `<option value="${m.id}">${m.firstName} ${m.surname}</option>`).join('');
+    const serviceOptions = services!.map((s: any) =>
+      `<option value="${s.id}">${s.serviceName} (€${s.price})</option>`).join('');
+
+    win.document.write(`
+      <html><head><title>Add Appointment</title>
+      <style>
+        body { font-family: sans-serif; padding: 20px; }
+        label { display:block; margin-top:10px; font-weight:500; }
+        input, select { width:100%; padding:6px; margin-top:4px; }
+        button { margin-top:14px; padding:8px 12px; cursor:pointer; }
+      </style></head><body>
+        <h2>Add Appointment</h2>
+        <form id="form">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="datatime" value="${today}" required>
+
+          <label>Client</label>
+          <select id="clientId" required>
+            <option value="">-- Select Client --</option>
+            ${clientOptions}
+          </select>
+
+          <label>Master</label>
+          <select id="masterId" required>
+            <option value="">-- Select Master --</option>
+            ${masterOptions}
+          </select>
+
+          <label>Service</label>
+          <select id="serviceId" required>
+            <option value="">-- Select Service --</option>
+            ${serviceOptions}
+          </select>
+
+          <label>Sum (€)</label>
+          <input id="summ" type="number" placeholder="Enter amount" required>
+
+          <button type="submit">💾 Save</button>
+        </form>
+
+        <script>
+          const f = document.getElementById('form');
+          const serviceSelect = document.getElementById('serviceId');
+          const sumInput = document.getElementById('summ');
+
+          // Автопідстановка ціни сервісу
+          const serviceMap = ${JSON.stringify(services!.map((s: any) => ({ id: s.id, price: s.price })))};
+          serviceSelect.addEventListener('change', () => {
+            const sel = serviceMap.find(s => s.id == serviceSelect.value);
+            if (sel) sumInput.value = sel.price;
+          });
+
+          f.addEventListener('submit', e => {
+            e.preventDefault();
+            const payload = {
+              datatime: document.getElementById('datatime').value,
+              client: { id: parseInt(document.getElementById('clientId').value) },
+              master: { id: parseInt(document.getElementById('masterId').value) },
+              service: { id: parseInt(document.getElementById('serviceId').value) },
+              summ: parseFloat(document.getElementById('summ').value)
+            };
+            window.opener.postMessage({ type: 'save-appointment', payload }, '*');
+            window.close();
+          });
+        </script>
+      </body></html>
+    `);
+    win.document.close();
+  });
+}
+
+openEdit(a: any) {
+  Promise.all([
+    this.api.getClients().toPromise(),
+    this.api.getMasters().toPromise(),
+    this.api.getServices().toPromise()
+  ]).then(([clients = [], masters = [], services = []]) => {
+    if (!clients || !masters || !services) return;
+
+    const win = window.open('', '_blank', 'width=640,height=600');
+    if (!win) return;
+
+    const datetimeValue = new Date(a.datatime).toISOString().slice(0, 16);
+
+    const clientOptions = clients!.map((c: any) =>
+      `<option value="${c.id}" ${a.client?.id === c.id ? 'selected' : ''}>${c.firstName} ${c.surname}</option>`).join('');
+    const masterOptions = masters!.map((m: any) =>
+      `<option value="${m.id}" ${a.master?.id === m.id ? 'selected' : ''}>${m.firstName} ${m.surname}</option>`).join('');
+    const serviceOptions = services!.map((s: any) =>
+      `<option value="${s.id}" ${a.service?.id === s.id ? 'selected' : ''}>${s.serviceName} (€${s.price})</option>`).join('');
+
+    win.document.write(`
+      <html><head><title>Edit Appointment</title>
+      <style>
+        body { font-family: sans-serif; padding: 20px; }
+        label { display:block; margin-top:10px; font-weight:500; }
+        input, select { width:100%; padding:6px; margin-top:4px; }
+        button { margin-top:14px; padding:8px 12px; cursor:pointer; }
+      </style></head><body>
+        <h2>Edit Appointment</h2>
+        <form id="form">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="datatime" value="${datetimeValue}" required>
+
+          <label>Client</label>
+          <select id="clientId" required>${clientOptions}</select>
+
+          <label>Master</label>
+          <select id="masterId" required>${masterOptions}</select>
+
+          <label>Service</label>
+          <select id="serviceId" required>${serviceOptions}</select>
+
+          <label>Sum (€)</label>
+          <input id="summ" type="number" value="${a.summ || ''}" required>
+
+          <button type="submit">💾 Save</button>
+        </form>
+
+        <script>
+          const f = document.getElementById('form');
+          const serviceSelect = document.getElementById('serviceId');
+          const sumInput = document.getElementById('summ');
+
+          const serviceMap = ${JSON.stringify(services!.map((s: any) => ({ id: s.id, price: s.price })))};
+          serviceSelect.addEventListener('change', () => {
+            const sel = serviceMap.find(s => s.id == serviceSelect.value);
+            if (sel) sumInput.value = sel.price;
+          });
+
+          f.addEventListener('submit', e => {
+            e.preventDefault();
+            const payload = {
+              id: ${a.id},
+              datatime: document.getElementById('datatime').value,
+              client: { id: parseInt(document.getElementById('clientId').value) },
+              master: { id: parseInt(document.getElementById('masterId').value) },
+              service: { id: parseInt(document.getElementById('serviceId').value) },
+              summ: parseFloat(document.getElementById('summ').value)
+            };
+            window.opener.postMessage({ type: 'save-appointment', payload }, '*');
+            window.close();
+          });
+        </script>
+      </body></html>
+    `);
+    win.document.close();
+  });
+}
+  
   del(id: number) {
     if (!confirm('Delete appointment?')) return;
     this.api.deleteAppointment(id).subscribe({ next: () => this.filter() });
