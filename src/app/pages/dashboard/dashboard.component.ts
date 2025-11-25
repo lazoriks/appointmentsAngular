@@ -3,9 +3,10 @@ import { AppointmentsTableComponent } from '../../components/tables/appointments
 import { ClientsTableComponent } from '../../components/tables/clients-table/clients-table.component';
 import { MastersTableComponent } from '../../components/tables/masters-table/masters-table.component';
 import { ServicesTableComponent } from '../../components/tables/services-table/services-table.component';
+import { GroupsTableComponent } from '../../components/tables/groups-table/groups-table.component';
 import { CommonModule } from '@angular/common';
 
-type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
+type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups';
 
 @Component({
   standalone: true,
@@ -15,7 +16,8 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
     AppointmentsTableComponent,
     ClientsTableComponent,
     MastersTableComponent,
-    ServicesTableComponent
+    ServicesTableComponent,
+    GroupsTableComponent
   ],
   template: `
     <div class="card">
@@ -24,6 +26,7 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
         <div class="tab" [class.active]="tab() === 'clients'" (click)="setTab('clients')">Clients</div>
         <div class="tab" [class.active]="tab() === 'masters'" (click)="setTab('masters')">Masters</div>
         <div class="tab" [class.active]="tab() === 'services'" (click)="setTab('services')">Services</div>
+        <div class="tab" [class.active]="tab() === 'groups'"   (click)="setTab('groups')">Groups</div>
       </div>
 
       <ng-container [ngSwitch]="tab()">
@@ -31,6 +34,7 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services';
         <app-clients-table *ngSwitchCase="'clients'"></app-clients-table>
         <app-masters-table *ngSwitchCase="'masters'"></app-masters-table>
         <app-services-table *ngSwitchCase="'services'"></app-services-table>
+        <app-groups-table *ngSwitchCase="'groups'"></app-groups-table>
       </ng-container>
     </div>
   `

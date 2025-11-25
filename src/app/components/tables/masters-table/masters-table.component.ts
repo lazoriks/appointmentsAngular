@@ -1,12 +1,15 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common'; // ✅ тут є NgFor і DatePipe
-import { FormsModule } from '@angular/forms';    
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+
 import { AdminService } from '../../../services/admin.service';
+import { Master } from '../../../models/master.model';
+import { GroupService } from '../../../models/group-service.model';
 
 @Component({
   standalone: true,
   selector: 'app-masters-table',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   styleUrls: ['./masters-table.component.scss'],
   template: `
     <div class="card" style="margin-bottom:12px;">
@@ -23,22 +26,24 @@ import { AdminService } from '../../../services/admin.service';
             <th>Surname</th>
             <th>Phone</th>
             <th>Email</th>
-            <th>Group Service ID</th> <!-- ✅ оновлено під ManyToOne -->
-            <th>Actions</th>
+            <th>Group</th>
+            <th style="width:150px;">Actions</th>
           </tr>
         </thead>
+
         <tbody>
           @for (m of rows; track m.id) {
             <tr>
               <td>{{ rows.indexOf(m) + 1 }}</td>
               <td>{{ m.firstName }}</td>
               <td>{{ m.surname }}</td>
-              <td>{{ m.phone || '-' }}</td>
+              <td>{{ (m as any).phone || '-' }}</td>
               <td>{{ m.email || '-' }}</td>
-              <td>{{ m.groupService?.id || '-' }}</td> <!-- ✅ використовує об'єкт -->
+              <td>{{ groupsMap[m.groupServiceId!] || '-' }}</td>
+
               <td>
-                <button class="btn" (click)="openEdit(m)">Edit</button>
-                <button class="btn danger" (click)="del(m.id)">Delete</button>
+                <button class="btn small" (click)="openEdit(m)">Edit</button>
+                <button class="btn small danger" (click)="del(m.id)">Delete</button>
               </td>
             </tr>
           }
@@ -47,82 +52,59 @@ import { AdminService } from '../../../services/admin.service';
     </div>
   `
 })
-export class MastersTableComponent implements OnInit, OnDestroy {
-  rows: any[] = [];
-  constructor(private api: AdminService) {}
+export class MastersTableComponent implements OnInit {
+  rows: Master[] = [];
+  groups: GroupService[] = [];
+
+  /** Map: groupId → name */
+  groupsMap: Record<number, string> = {};
+
+  constructor(
+    private api: AdminService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
+    this.loadGroups();
     this.refresh();
-    window.addEventListener('message', this.onMessage);
-  }
-  ngOnDestroy() {
-    window.removeEventListener('message', this.onMessage);
   }
 
+  /** ---- LOAD GROUPS ---- */
+  loadGroups() {
+    this.api.getGroups().subscribe({
+      next: (g) => {
+        this.groups = g;
+        this.groupsMap = Object.fromEntries(
+          g.map(x => [x.id, x.name])
+        );
+      },
+      error: (err) => console.error('Failed to load groups:', err)
+    });
+  }
+
+  /** ---- LOAD MASTERS ---- */
   refresh() {
-    this.api.getMasters().subscribe({ next: (d) => (this.rows = d) });
+    this.api.getMasters().subscribe({
+      next: (data) => (this.rows = data),
+      error: (err) => console.error('Failed to load masters:', err)
+    });
   }
 
+  /** ---- ROUTING ---- */
   openAdd() {
-    this.openFormWindow('Add Master', {});
-  }
-  openEdit(m: any) {
-    this.openFormWindow('Edit Master', m);
+    this.router.navigate(['/edit/master', 'new']);
   }
 
-  openFormWindow(title: string, data: any) {
-    const win = window.open('', '_blank', 'width=600,height=520');
-    if (!win) return;
-
-    const groupId = data.groupService?.id || '';
-
-    win.document.write(`
-      <html><head><title>${title}</title>
-      <style>
-        body{font-family:sans-serif;padding:20px;}
-        label{display:block;margin-top:10px;font-weight:600;}
-        input{width:100%;padding:6px;margin-top:4px;}
-        button{margin-top:12px;padding:8px 14px;cursor:pointer;}
-      </style></head>
-      <body>
-      <h2>${title}</h2>
-      <form id="form">
-        <label>First Name</label><input id="firstName" value="${data.firstName || ''}" required>
-        <label>Surname</label><input id="surname" value="${data.surname || ''}" required>
-        <label>Phone</label><input id="phone" value="${data.phone || ''}">
-        <label>Email</label><input id="email" value="${data.email || ''}">
-        <label>Group Service ID</label><input id="groupServiceId" type="number" value="${groupId}">
-        <button type="submit">Save</button>
-      </form>
-      <script>
-        const f=document.getElementById('form');
-        f.addEventListener('submit',e=>{
-          e.preventDefault();
-          const payload={
-            id:${data.id||'null'},
-            firstName:document.getElementById('firstName').value,
-            surname:document.getElementById('surname').value,
-            phone:document.getElementById('phone').value,
-            email:document.getElementById('email').value,
-            groupService:{id:Number(document.getElementById('groupServiceId').value)||null}
-          };
-          window.opener.postMessage({type:'save-master',payload},'*');
-          window.close();
-        });
-      </script>
-      </body></html>
-    `);
-    win.document.close();
+  openEdit(m: Master) {
+    this.router.navigate(['/edit/master', m.id]);
   }
-
-  onMessage = (e: MessageEvent) => {
-    if (e.data?.type === 'save-master') {
-      this.api.saveMaster(e.data.payload).subscribe({ next: () => this.refresh() });
-    }
-  };
 
   del(id: number) {
     if (!confirm('Delete master?')) return;
-    this.api.deleteMaster(id).subscribe({ next: () => this.refresh() });
+
+    this.api.deleteMaster(id).subscribe({
+      next: () => this.refresh(),
+      error: (err) => console.error('Error deleting master:', err)
+    });
   }
 }
