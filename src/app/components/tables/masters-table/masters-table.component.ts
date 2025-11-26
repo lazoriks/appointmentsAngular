@@ -37,7 +37,7 @@ import { GroupService } from '../../../models/group-service.model';
               <td>{{ rows.indexOf(m) + 1 }}</td>
               <td>{{ m.firstName }}</td>
               <td>{{ m.surname }}</td>
-              <td>{{ (m as any).phone || '-' }}</td>
+              <td>{{ m.phone || '-' }}</td>
               <td>{{ m.email || '-' }}</td>
               <td>{{ groupsMap[m.groupServiceId!] || '-' }}</td>
 

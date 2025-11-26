@@ -9,7 +9,7 @@ import { GroupService } from '../../../models/group-service.model';
   standalone: true,
   selector: 'app-groups-table',
   imports: [CommonModule],
-  styleUrls: ['./groups-table.component.scss'],
+  styles: [],
   template: `
     <div class="card" style="margin-bottom:12px;">
       <button class="btn primary" (click)="openAdd()">Add Group</button>
