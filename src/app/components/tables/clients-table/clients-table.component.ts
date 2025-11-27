@@ -12,8 +12,13 @@ import { Client } from '../../../models/client.model';
   styleUrls: ['./clients-table.component.scss'],
   template: `
     <div class="card" style="margin-bottom:12px;">
-      <button class="btn primary" (click)="openAdd()">Add Client</button>
-      <button class="btn" (click)="refresh()">Refresh</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button class="btn primary" (click)="openAdd()">Add Client</button>
+        <button class="btn" (click)="refresh()">Refresh</button>
+        <button class="btn info" (click)="toggleSort()">
+          Sort: {{ sortAscending ? 'A-Z' : 'Z-A' }}
+        </button>
+      </div>
     </div>
 
     <div class="card">
@@ -21,26 +26,47 @@ import { Client } from '../../../models/client.model';
         <thead>
           <tr>
             <th>#</th>
-            <th>First Name</th>
+            <th (click)="toggleSort()" style="cursor:pointer;">
+              First Name 
+              <span *ngIf="sortAscending">↑</span>
+              <span *ngIf="!sortAscending">↓</span>
+            </th>
             <th>Surname</th>
             <th>Mobile</th>
             <th>Email</th>
+            <th>Date Created</th>
             <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          @for (c of rows; track c.id) {
+          @for (c of sortedRows; track c.id; let i = $index) {
             <tr>
-              <td>{{ rows.indexOf(c) + 1 }}</td>
+              <td>{{ i + 1 }}</td>
               <td>{{ c.firstName }}</td>
               <td>{{ c.surname || '-' }}</td>
-              <td>{{ c.mobile }}</td>
-              <td>{{ c.email || '-' }}</td>
-
+              <td>
+                <a [href]="'tel:' + c.mobile" class="link">{{ c.mobile }}</a>
+              </td>
+              <td>
+                <a *ngIf="c.email" [href]="'mailto:' + c.email" class="link">{{ c.email }}</a>
+                <span *ngIf="!c.email">-</span>
+              </td>
+              <td>
+                <span [title]="c.date_created | date:'medium'">
+                  {{ c.date_created | date:'dd.MM.yyyy' }}
+                </span>
+              </td>
               <td>
                 <button class="btn small" (click)="openEdit(c)">Edit</button>
                 <button class="btn small danger" (click)="del(c.id)">Delete</button>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="7" style="text-align:center;padding:20px;">
+                No clients found
               </td>
             </tr>
           }
@@ -51,6 +77,8 @@ import { Client } from '../../../models/client.model';
 })
 export class ClientsTableComponent implements OnInit {
   rows: Client[] = [];
+  sortedRows: Client[] = [];
+  sortAscending = true;
 
   constructor(
     private api: AdminService,
@@ -63,9 +91,28 @@ export class ClientsTableComponent implements OnInit {
 
   refresh() {
     this.api.getClients().subscribe({
-      next: (d) => (this.rows = d),
+      next: (data) => {
+        this.rows = data;
+        this.applySort();
+      },
       error: (err) => console.error('Failed to load clients:', err)
     });
+  }
+
+  applySort() {
+    this.sortedRows = [...this.rows].sort((a, b) => {
+      const nameA = a.firstName?.toLowerCase() || '';
+      const nameB = b.firstName?.toLowerCase() || '';
+      
+      if (nameA < nameB) return this.sortAscending ? -1 : 1;
+      if (nameA > nameB) return this.sortAscending ? 1 : -1;
+      return 0;
+    });
+  }
+
+  toggleSort() {
+    this.sortAscending = !this.sortAscending;
+    this.applySort();
   }
 
   openAdd() {

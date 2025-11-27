@@ -10,4 +10,5 @@ export interface Appointment {
   services?: ServiceModel[];
   client: Client;
   master: Master;
+  date_created: string;
 }

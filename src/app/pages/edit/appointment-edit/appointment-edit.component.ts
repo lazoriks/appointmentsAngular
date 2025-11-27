@@ -14,7 +14,7 @@ import { ServiceModel } from '../../../models/service.model';
   selector: 'app-appointment-edit',
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="card" *ngIf="appointment">
+    <div class="card" *ngIf="appointment; else loading">
       <h2>{{ isNew ? 'Add Appointment' : 'Edit Appointment' }}</h2>
 
       <!-- DATETIME -->
@@ -26,7 +26,7 @@ import { ServiceModel } from '../../../models/service.model';
       <select [(ngModel)]="appointment.client.id">
         <option value="">-- Select Client --</option>
         <option *ngFor="let c of clients" [value]="c.id">
-          {{ c.firstName }} {{ c.surname }}
+          {{ c.firstName }} {{ c.surname || '' }}
         </option>
       </select>
 
@@ -35,7 +35,7 @@ import { ServiceModel } from '../../../models/service.model';
       <select [(ngModel)]="appointment.master.id">
         <option value="">-- Select Master --</option>
         <option *ngFor="let m of masters" [value]="m.id">
-          {{ m.firstName }} {{ m.surname }}
+          {{ m.firstName }} {{ m.surname || '' }}
         </option>
       </select>
 
@@ -52,12 +52,27 @@ import { ServiceModel } from '../../../models/service.model';
         </label>
       </div>
 
-      <!-- SUMMARY -->
-      <label>Total (€)</label>
-      <input [(ngModel)]="appointment.summ" type="number" readonly />
+      <!-- TOTAL SUM -->
+      <label>Total Sum (€)</label>
+      <input [(ngModel)]="appointment.summ" type="number" step="0.01" min="0" readonly />
 
-      <button class="btn primary" (click)="save()">Save</button>
+      <!-- DATE CREATED (Readonly for existing appointments) -->
+      <div *ngIf="!isNew">
+        <label>Date Created</label>
+        <input [value]="appointment.date_created | date:'yyyy-MM-dd HH:mm'" readonly />
+      </div>
+
+      <div class="button-group">
+        <button class="btn primary" (click)="save()">Save</button>
+        <button class="btn" (click)="cancel()">Cancel</button>
+      </div>
     </div>
+
+    <ng-template #loading>
+      <div class="card">
+        <p>Loading...</p>
+      </div>
+    </ng-template>
   `,
   styles: [`
     .card { padding:16px; max-width:750px; margin:16px auto; }
@@ -65,8 +80,9 @@ import { ServiceModel } from '../../../models/service.model';
     input, select, textarea { width:100%; padding:6px; margin-top:4px; box-sizing:border-box; }
     .service-list { margin-top:8px; border:1px solid #ccc; padding:10px; border-radius:8px; max-height:250px; overflow-y:auto; }
     .svc-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .btn { padding:8px 14px; cursor:pointer; margin-top:16px; border-radius:4px; }
+    .btn { padding:8px 14px; cursor:pointer; margin-top:16px; border-radius:4px; margin-right:8px; }
     .btn.primary { background:#1976d2; color:white; }
+    .button-group { display:flex; gap:8px; }
   `]
 })
 export class AppointmentEditComponent implements OnInit {
@@ -78,6 +94,7 @@ export class AppointmentEditComponent implements OnInit {
 
   isNew = false;
   id!: number;
+  loading = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -90,9 +107,20 @@ export class AppointmentEditComponent implements OnInit {
     this.isNew = idParam === 'new';
 
     // Load dropdown data
-    this.api.getClients().subscribe(c => this.clients = c);
-    this.api.getMasters().subscribe(m => this.masters = m);
-    this.api.getServices().subscribe(s => this.services = s);
+    this.api.getClients().subscribe({
+      next: c => this.clients = c,
+      error: err => console.error('Failed to load clients:', err)
+    });
+    
+    this.api.getMasters().subscribe({
+      next: m => this.masters = m,
+      error: err => console.error('Failed to load masters:', err)
+    });
+    
+    this.api.getServices().subscribe({
+      next: s => this.services = s,
+      error: err => console.error('Failed to load services:', err)
+    });
 
     if (this.isNew) {
       this.appointment = {
@@ -101,24 +129,53 @@ export class AppointmentEditComponent implements OnInit {
         client: { id: 0, firstName: '', mobile: '' },
         master: { id: 0, firstName: '', surname: '' },
         services: [],
-        summ: 0
+        summ: 0,
+        date_created: new Date().toISOString()
       };
+      this.loading = false;
       return;
     }
 
     this.id = Number(idParam);
-    this.api.getAppointment(this.id).subscribe(a => {
-      this.appointment = {
-        ...a,
-        datatime: new Date(a.datatime).toISOString().slice(0,16)
-      };
+    if (isNaN(this.id)) {
+      console.error('Invalid appointment ID:', idParam);
+      this.loading = false;
+      return;
+    }
+
+    this.api.getAppointment(this.id).subscribe({
+      next: a => {
+        console.log('Loaded appointment:', a);
+        // Ensure services array exists
+        if (!a.services && a.service) {
+          a.services = [a.service];
+        }
+        this.appointment = {
+          ...a,
+          datatime: this.formatDateForInput(new Date(a.datatime))
+        };
+        this.loading = false;
+      },
+      error: err => {
+        console.error('Failed to load appointment:', err);
+        this.loading = false;
+      }
     });
   }
 
   defaultDatetime(): string {
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0,16);
+    return this.formatDateForInput(now);
+  }
+
+  formatDateForInput(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   /** MULTISELECT HELPERS */
@@ -147,8 +204,49 @@ export class AppointmentEditComponent implements OnInit {
   }
 
   save() {
-    this.api.saveAppointment(this.appointment).subscribe(() => {
-      this.router.navigate(['/dashboard']);
-    });
+    // Validate required fields
+    if (!this.appointment.client.id || !this.appointment.master.id) {
+      alert('Please select both client and master');
+      return;
+    }
+
+    if (!this.appointment.services || this.appointment.services.length === 0) {
+      alert('Please select at least one service');
+      return;
+    }
+
+    // Prepare data for backend
+    const appointmentToSave = {
+      ...this.appointment,
+      datatime: new Date(this.appointment.datatime).toISOString()
+    };
+
+    if (this.isNew) {
+      this.api.saveAppointment(appointmentToSave).subscribe({
+        next: () => {
+          console.log('Appointment created successfully');
+          this.router.navigate(['/dashboard']);
+        },
+        error: err => {
+          console.error('Error creating appointment:', err);
+          alert('Error creating appointment');
+        }
+      });
+    } else {
+      this.api.updateAppointment(appointmentToSave).subscribe({
+        next: () => {
+          console.log('Appointment updated successfully');
+          this.router.navigate(['/dashboard']);
+        },
+        error: err => {
+          console.error('Error updating appointment:', err);
+          alert('Error updating appointment');
+        }
+      });
+    }
+  }
+
+  cancel() {
+    this.router.navigate(['/dashboard']);
   }
 }

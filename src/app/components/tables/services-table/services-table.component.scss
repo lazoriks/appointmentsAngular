@@ -1,1 +1,55 @@
-@use '../appointments-table/appointments-table.component'  as *;
+@use '../appointments-table/appointments-table.component' as *;
+
+.group-header {
+  background: #e8f5e8;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1em;
+  border-left: 4px solid #4caf50;
+
+  &:hover {
+    background: #d8edd8;
+  }
+}
+
+.services-count {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: normal;
+}
+
+.arrow {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  
+  th {
+    background: #f5f5f5;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  tr:hover {
+    background: #f8f9fa;
+  }
+}
+
+// Використовуємо стилі кнопок з appointments-table
+// Вони вже будуть доступні через @use

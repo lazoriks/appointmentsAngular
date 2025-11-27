@@ -38,6 +38,11 @@ export class AdminService {
     return this.http.delete(`${BASE}/appointments/${id}`);
   }
 
+  // В AdminService додайте цей метод:
+  updateAppointment(app: Appointment): Observable<Appointment> {
+    return this.http.put<Appointment>(`${BASE}/appointments/${app.id}`, app);
+  }
+
   // -------------------------
   // SERVICES
   // -------------------------

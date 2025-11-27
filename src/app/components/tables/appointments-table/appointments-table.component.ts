@@ -21,6 +21,14 @@ interface DayGroup {
   collapsed: boolean;
 }
 
+interface WeekGroup {
+  weekNumber: number;
+  weekRange: string;
+  totalSum: number;
+  days: DayGroup[];
+  collapsed: boolean;
+}
+
 @Component({
   standalone: true,
   selector: 'app-appointments-table',
@@ -48,62 +56,79 @@ interface DayGroup {
       </div>
     </div>
 
-    <div class="card" *ngIf="grouped.length">
-      <div *ngFor="let day of grouped">
-        <div class="day-header" (click)="toggleDay(day)">
-          📅 <b>{{ day.weekday }}</b> — {{ day.date }}
-          <span class="sum">Total: {{ day.totalSum | number:'1.0-0' }} €</span>
-          <span class="arrow">{{ day.collapsed ? '▶' : '▼' }}</span>
+    <div class="card" *ngIf="weeksGrouped.length">
+      <div *ngFor="let week of weeksGrouped">
+        <!-- Week Header -->
+        <div class="week-header" (click)="toggleWeek(week)">
+          📅 <b>Week {{ week.weekNumber }}</b> — {{ week.weekRange }}
+          <span class="sum">Total: {{ week.totalSum | number:'1.2-2' }} €</span>
+          <span class="arrow">{{ week.collapsed ? '▶' : '▼' }}</span>
         </div>
 
-        <div *ngIf="!day.collapsed" class="day-block">
-          <div *ngFor="let m of day.masters" class="master-block">
-            <div class="master-header" (click)="toggleMaster(m)">
-              👩‍🎨 {{ m.masterName }}
-              <span class="sum">{{ m.totalSum | number:'1.0-0' }} €</span>
-              <span class="arrow">{{ m.collapsed ? '▶' : '▼' }}</span>
+        <div *ngIf="!week.collapsed" class="week-block">
+          <!-- Days -->
+          <div *ngFor="let day of week.days">
+            <div class="day-header" (click)="toggleDay(day)">
+              📅 <b>{{ day.weekday }}</b> — {{ day.date }}
+              <span class="sum">Total: {{ day.totalSum | number:'1.2-2' }} €</span>
+              <span class="arrow">{{ day.collapsed ? '▶' : '▼' }}</span>
             </div>
 
-            <table class="table" *ngIf="!m.collapsed">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Time</th>
-                  <th>Client</th>
-                  <th>Services</th>
-                  <th>Sum</th>
-                  <th style="width:150px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let a of m.appointments; let i = index">
-                  <td>{{ i + 1 }}</td>
-                  <td>{{ a.datatime | date:'HH:mm' }}</td>
-                  <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
-                  <td>{{ servicesToString(a) }}</td>
-                  <td>{{ a.summ }}</td>
-                  <td>
-                    <button class="btn small" (click)="openEdit(a)">Edit</button>
-                    <button class="btn small danger" (click)="del(a.id)">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div *ngIf="!day.collapsed" class="day-block">
+              <!-- Masters -->
+              <div *ngFor="let m of day.masters" class="master-block">
+                <div class="master-header" (click)="toggleMaster(m)">
+                  👩‍🎨 {{ m.masterName }}
+                  <span class="sum">{{ m.totalSum | number:'1.2-2' }} €</span>
+                  <span class="arrow">{{ m.collapsed ? '▶' : '▼' }}</span>
+                </div>
 
+                <table class="table" *ngIf="!m.collapsed">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Time</th>
+                      <th>Client</th>
+                      <th>Services</th>
+                      <th>Sum</th>
+                      <th>Created</th>
+                      <th style="width:150px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let a of m.appointments; let i = index">
+                      <td>{{ i + 1 }}</td>
+                      <td>{{ a.datatime | date:'HH:mm' }}</td>
+                      <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
+                      <td>{{ servicesToString(a) }}</td>
+                      <td>{{ a.summ | number:'1.2-2' }} €</td>
+                      <td>{{ a.date_created | date:'dd.MM.yy HH:mm' }}</td>
+                      <td>
+                        <button class="btn small" (click)="openEdit(a)">Edit</button>
+                        <button class="btn small danger" (click)="del(a.id)">Delete</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="!grouped.length" style="padding:16px;">No appointments found</div>
+    <div *ngIf="!weeksGrouped.length && !loading" style="padding:16px;">No appointments found</div>
+    <div *ngIf="loading" style="padding:16px;">Loading...</div>
   `
 })
 export class AppointmentsTableComponent implements OnInit {
   rows: Appointment[] = [];
   grouped: DayGroup[] = [];
+  weeksGrouped: WeekGroup[] = [];
   from = '';
   to = '';
   allCollapsed = true;
+  loading = false;
 
   constructor(
     private api: AdminService,
@@ -115,11 +140,6 @@ export class AppointmentsTableComponent implements OnInit {
     this.filter();
   }
 
-  /** ---------------------
-   * DEFAULT DATE RANGE:
-   * from = Monday this week
-   * to = Monday + 14 days
-   * --------------------- */
   setDefaultDates() {
     const today = new Date();
     const dow = today.getDay(); 
@@ -141,9 +161,16 @@ export class AppointmentsTableComponent implements OnInit {
   }
 
   filter() {
+    this.loading = true;
     this.api.getAppointments(this.from, this.to).subscribe({
-      next: data => this.processData(data),
-      error: err => console.error(err)
+      next: data => {
+        this.processData(data);
+        this.loading = false;
+      },
+      error: err => {
+        console.error(err);
+        this.loading = false;
+      }
     });
   }
 
@@ -191,6 +218,73 @@ export class AppointmentsTableComponent implements OnInit {
         );
         return day;
       });
+
+    this.groupByWeeks();
+  }
+
+  /** Групування по тижнях */
+  groupByWeeks() {
+    const weeksMap: { [weekKey: string]: WeekGroup } = {};
+
+    for (const day of this.grouped) {
+      const date = new Date(day.date);
+      const weekNumber = this.getWeekNumber(date);
+      const weekStart = this.getWeekStart(date);
+      const weekEnd = this.getWeekEnd(date);
+      const weekRange = `${this.formatDate(weekStart)} - ${this.formatDate(weekEnd)}`;
+      const weekKey = `${weekStart.toISOString().split('T')[0]}`;
+
+      if (!weeksMap[weekKey]) {
+        weeksMap[weekKey] = {
+          weekNumber,
+          weekRange,
+          totalSum: 0,
+          days: [],
+          collapsed: this.allCollapsed
+        };
+      }
+
+      weeksMap[weekKey].days.push(day);
+      weeksMap[weekKey].totalSum += day.totalSum;
+    }
+
+    this.weeksGrouped = Object.values(weeksMap)
+      .sort((a, b) => a.weekNumber - b.weekNumber)
+      .map(week => {
+        week.days.sort((a, b) => a.date.localeCompare(b.date));
+        return week;
+      });
+  }
+
+  /** Отримати номер тижня */
+  getWeekNumber(date: Date): number {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  }
+
+  /** Отримати початок тижня (понеділок) */
+  getWeekStart(date: Date): Date {
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.setDate(diff));
+  }
+
+  /** Отримати кінець тижня (неділя) */
+  getWeekEnd(date: Date): Date {
+    const start = this.getWeekStart(date);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return end;
+  }
+
+  /** Форматування дати */
+  formatDate(date: Date): string {
+    return date.toLocaleDateString('en-GB');
+  }
+
+  toggleWeek(week: WeekGroup) {
+    week.collapsed = !week.collapsed;
   }
 
   toggleDay(day: DayGroup) {
@@ -203,9 +297,12 @@ export class AppointmentsTableComponent implements OnInit {
 
   toggleAll() {
     this.allCollapsed = !this.allCollapsed;
-    this.grouped.forEach(day => {
-      day.collapsed = this.allCollapsed;
-      day.masters.forEach(m => (m.collapsed = this.allCollapsed));
+    this.weeksGrouped.forEach(week => {
+      week.collapsed = this.allCollapsed;
+      week.days.forEach(day => {
+        day.collapsed = this.allCollapsed;
+        day.masters.forEach(m => (m.collapsed = this.allCollapsed));
+      });
     });
   }
 
@@ -217,7 +314,7 @@ export class AppointmentsTableComponent implements OnInit {
     return a.service?.serviceName || '-';
   }
 
-  /** ROUTING — NO POPUPS */
+  /** ROUTING */
   openAdd() {
     this.router.navigate(['/edit/appointment', 'new']);
   }

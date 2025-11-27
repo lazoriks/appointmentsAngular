@@ -20,10 +20,9 @@ import { GroupService } from '../../../models/group-service.model';
       <table class="table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Name</th>
+            <th>ID</th>
+            <th>Group Name</th>
             <th>Description</th>
-            <th>Date Created</th>
             <th style="width:150px;">Actions</th>
           </tr>
         </thead>
@@ -31,10 +30,9 @@ import { GroupService } from '../../../models/group-service.model';
         <tbody>
           @for (g of rows; track g.id) {
             <tr>
-              <td>{{ rows.indexOf(g) + 1 }}</td>
+              <td>{{ g.id }}</td>
               <td>{{ g.name }}</td>
               <td>{{ g.description || '-' }}</td>
-              <td>{{ g.dateCreated ? (g.dateCreated | date:'yyyy-MM-dd') : '-' }}</td>
 
               <td>
                 <button class="btn small" (click)="openEdit(g)">Edit</button>

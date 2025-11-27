@@ -5,4 +5,5 @@ export interface Client {
   mobile: string;
   email?: string;
   googleId?: string;
+  date_created?: string;
 }
