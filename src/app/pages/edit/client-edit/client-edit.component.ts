@@ -43,7 +43,7 @@ import { Appointment } from '../../../models/appointment.model';
     </div>
 
     <!-- Appointments -->
-    <div class="card" *ngIf="!isNew && client.id">
+    <div class="card" *ngIf="client && !isNew && client.id">
       <h3>Appointments of this client</h3>
 
       <table class="table" *ngIf="appointments.length">
