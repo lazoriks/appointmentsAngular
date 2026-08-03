@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
 import { Appointment } from '../models/appointment.model';
 import { Client } from '../models/client.model';
 import { Master } from '../models/master.model';
@@ -9,8 +10,8 @@ import { ServiceModel } from '../models/service.model';
 import { GroupService } from '../models/group-service.model';
 import { Holiday } from '../models/holiday.model';
 
-const BASE = 'https://appointmentspring-206160864813.us-central1.run.app/api/admin';
-const HOLIDAYS_BASE = 'https://appointmentspring-206160864813.us-central1.run.app/api/holidays';
+const BASE = `${environment.apiBase}/admin`;
+const HOLIDAYS_BASE = `${environment.apiBase}/holidays`;
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -36,11 +37,6 @@ export class AdminService {
 
   deleteAppointment(id: number) {
     return this.http.delete(`${BASE}/appointments/${id}`);
-  }
-
-  // В AdminService додайте цей метод:
-  updateAppointment(app: Appointment): Observable<Appointment> {
-    return this.http.put<Appointment>(`${BASE}/appointments/${app.id}`, app);
   }
 
   // -------------------------
@@ -79,17 +75,6 @@ export class AdminService {
 
   deleteMaster(id: number) {
     return this.http.delete(`${BASE}/masters/${id}`);
-  }
-
-  // -------------------------
-  // MASTER SERVICES (Many-to-Many)
-  // -------------------------
-  getMasterServices(masterId: number): Observable<ServiceModel[]> {
-    return this.http.get<ServiceModel[]>(`${BASE}/masters/${masterId}/services`);
-  }
-
-  updateMasterServices(masterId: number, serviceIds: number[]): Observable<any> {
-    return this.http.post(`${BASE}/masters/${masterId}/services`, serviceIds);
   }
 
   // -------------------------

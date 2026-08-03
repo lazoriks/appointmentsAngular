@@ -3,18 +3,23 @@ import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private tokenKey = 'admin_token';
+  private tokenKey = 'admin_key';
   isAuthed = signal<boolean>(!!localStorage.getItem(this.tokenKey));
 
   constructor(private router: Router) {}
 
-  login(username: string, password: string): boolean {
-    if (username === 'admin' && password === 'Beauty2025') {
-      localStorage.setItem(this.tokenKey, 'ok');
-      this.isAuthed.set(true);
-      return true;
-    }
-    return false;
+  // Stores whatever key the user enters; the backend is the source of truth —
+  // an invalid key just gets 401s from the API (see adminKeyInterceptor).
+  login(adminKey: string): boolean {
+    const key = adminKey.trim();
+    if (!key) return false;
+    localStorage.setItem(this.tokenKey, key);
+    this.isAuthed.set(true);
+    return true;
+  }
+
+  getAdminKey(): string | null {
+    return localStorage.getItem(this.tokenKey);
   }
 
   logout() {

@@ -221,29 +221,17 @@ export class AppointmentEditComponent implements OnInit {
       datatime: new Date(this.appointment.datatime).toISOString()
     };
 
-    if (this.isNew) {
-      this.api.saveAppointment(appointmentToSave).subscribe({
-        next: () => {
-          console.log('Appointment created successfully');
-          this.router.navigate(['/dashboard']);
-        },
-        error: err => {
-          console.error('Error creating appointment:', err);
-          alert('Error creating appointment');
-        }
-      });
-    } else {
-      this.api.updateAppointment(appointmentToSave).subscribe({
-        next: () => {
-          console.log('Appointment updated successfully');
-          this.router.navigate(['/dashboard']);
-        },
-        error: err => {
-          console.error('Error updating appointment:', err);
-          alert('Error updating appointment');
-        }
-      });
-    }
+    // saveAppointment upserts on the backend based on appointment.id
+    this.api.saveAppointment(appointmentToSave).subscribe({
+      next: () => {
+        console.log(this.isNew ? 'Appointment created successfully' : 'Appointment updated successfully');
+        this.router.navigate(['/dashboard']);
+      },
+      error: err => {
+        console.error('Error saving appointment:', err);
+        alert(this.isNew ? 'Error creating appointment' : 'Error updating appointment');
+      }
+    });
   }
 
   cancel() {

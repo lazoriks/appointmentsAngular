@@ -13,11 +13,8 @@ import { CommonModule } from '@angular/common';
       <div class="card">
         <h2>Admin Login</h2>
         <form (ngSubmit)="submit()">
-          <label>Username</label>
-          <input class="input" [(ngModel)]="username" name="username" required />
-          <div style="height:10px"></div>
-          <label>Password</label>
-          <input class="input" [(ngModel)]="password" name="password" type="password" required />
+          <label>Admin Key</label>
+          <input class="input" [(ngModel)]="adminKey" name="adminKey" type="password" required autofocus />
           <div style="height:16px"></div>
           <button class="btn primary" type="submit">Login</button>
           <span *ngIf="error" style="color:#e74c3c;margin-left:12px;">{{error}}</span>
@@ -27,17 +24,16 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class LoginComponent {
-  username = '';
-  password = '';
+  adminKey = '';
   error: string | null = null;
 
   constructor(private auth: AuthService, private router: Router) {}
 
   submit() {
-    if (this.auth.login(this.username, this.password)) {
+    if (this.auth.login(this.adminKey)) {
       this.router.navigate(['/dashboard']);
     } else {
-      this.error = 'Invalid credentials';
+      this.error = 'Enter the admin key';
     }
   }
 }
