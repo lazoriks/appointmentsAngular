@@ -1,21 +1,27 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private tokenKey = 'admin_key';
   isAuthed = signal<boolean>(!!localStorage.getItem(this.tokenKey));
 
-  constructor(private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  // Stores whatever key the user enters; the backend is the source of truth —
-  // an invalid key just gets 401s from the API (see adminKeyInterceptor).
-  login(adminKey: string): boolean {
-    const key = adminKey.trim();
-    if (!key) return false;
-    localStorage.setItem(this.tokenKey, key);
-    this.isAuthed.set(true);
-    return true;
+  // Exchanges username/password for the internal X-Admin-Key via the backend,
+  // so managers never see or type the raw key sent on every /api/admin request.
+  login(username: string, password: string): Observable<{ apiKey: string }> {
+    return this.http
+      .post<{ apiKey: string }>(`${environment.apiBase}/auth/login`, { username, password })
+      .pipe(
+        tap(res => {
+          localStorage.setItem(this.tokenKey, res.apiKey);
+          this.isAuthed.set(true);
+        })
+      );
   }
 
   getAdminKey(): string | null {

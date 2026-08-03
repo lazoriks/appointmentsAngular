@@ -13,10 +13,13 @@ import { CommonModule } from '@angular/common';
       <div class="card">
         <h2>Admin Login</h2>
         <form (ngSubmit)="submit()">
-          <label>Admin Key</label>
-          <input class="input" [(ngModel)]="adminKey" name="adminKey" type="password" required autofocus />
+          <label>Username</label>
+          <input class="input" [(ngModel)]="username" name="username" required autofocus />
+          <div style="height:10px"></div>
+          <label>Password</label>
+          <input class="input" [(ngModel)]="password" name="password" type="password" required />
           <div style="height:16px"></div>
-          <button class="btn primary" type="submit">Login</button>
+          <button class="btn primary" type="submit" [disabled]="loading">Login</button>
           <span *ngIf="error" style="color:#e74c3c;margin-left:12px;">{{error}}</span>
         </form>
       </div>
@@ -24,16 +27,22 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class LoginComponent {
-  adminKey = '';
+  username = '';
+  password = '';
   error: string | null = null;
+  loading = false;
 
   constructor(private auth: AuthService, private router: Router) {}
 
   submit() {
-    if (this.auth.login(this.adminKey)) {
-      this.router.navigate(['/dashboard']);
-    } else {
-      this.error = 'Enter the admin key';
-    }
+    this.loading = true;
+    this.error = null;
+    this.auth.login(this.username, this.password).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: () => {
+        this.loading = false;
+        this.error = 'Invalid username or password';
+      }
+    });
   }
 }
