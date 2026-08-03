@@ -32,7 +32,7 @@ import { GroupService } from '../../../models/group-service.model';
       <select [(ngModel)]="service.groupServiceId">
         <option value="">-- Select Group --</option>
         <option *ngFor="let g of groups" [value]="g.id">
-          {{ g.name }}
+          {{ g.groupName }}
         </option>
       </select>
 
@@ -88,12 +88,18 @@ export class ServiceEditComponent implements OnInit {
     this.serviceId = Number(id);
 
     this.api.getService(this.serviceId).subscribe(s => {
-      this.service = s;
+      this.service = { ...s, groupServiceId: s.groupService?.id };
     });
   }
 
   save() {
-    this.api.saveService(this.service).subscribe(() => {
+    const payload: ServiceModel = {
+      ...this.service,
+      groupService: this.service.groupServiceId
+        ? { id: this.service.groupServiceId, groupName: '' }
+        : undefined
+    };
+    this.api.saveService(payload).subscribe(() => {
       this.router.navigate(['/dashboard']);
     });
   }

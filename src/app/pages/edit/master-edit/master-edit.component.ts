@@ -36,7 +36,7 @@ import { Holiday } from '../../../models/holiday.model';
       <label>Group</label>
       <select [(ngModel)]="master.groupServiceId">
         <option value="">-- Select Group --</option>
-        <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+        <option *ngFor="let g of groups" [value]="g.id">{{ g.groupName }}</option>
       </select>
 
       <!-- SERVICES -->
@@ -158,6 +158,7 @@ export class MasterEditComponent implements OnInit {
     this.api.getMaster(id).subscribe(m => {
       this.master = {
         ...m,
+        groupServiceId: m.groupService?.id,
         serviceIds: m.services ? m.services.map(x => x.id) : []
       };
     });
@@ -209,7 +210,14 @@ export class MasterEditComponent implements OnInit {
   }
 
   save() {
-    this.api.saveMaster(this.master).subscribe(() => {
+    const payload: Master = {
+      ...this.master,
+      groupService: this.master.groupServiceId
+        ? { id: this.master.groupServiceId, groupName: '' }
+        : undefined,
+      services: (this.master.serviceIds ?? []).map(id => ({ id }))
+    };
+    this.api.saveMaster(payload).subscribe(() => {
       this.router.navigate(['/dashboard']);
     });
   }

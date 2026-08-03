@@ -95,7 +95,7 @@ export class ServicesTableComponent implements OnInit {
       next: (g) => {
         this.groups = g;
         this.groupsMap = Object.fromEntries(
-          g.map(gr => [gr.id, gr.name])
+          g.map(gr => [gr.id, gr.groupName])
         );
       },
       error: err => console.error('Failed to load groups:', err)
@@ -121,7 +121,7 @@ export class ServicesTableComponent implements OnInit {
     this.groups.forEach(group => {
       groupsMap.set(group.id, {
         groupId: group.id,
-        groupName: group.name,
+        groupName: group.groupName,
         services: [],
         collapsed: this.allCollapsed
       });
@@ -137,10 +137,10 @@ export class ServicesTableComponent implements OnInit {
 
     // Distribute services to groups
     this.rows.forEach(service => {
-      const groupId = service.groupServiceId || null;
+      const groupId = service.groupService?.id ?? null;
       if (!groupsMap.has(groupId)) {
         // If group not found in groups list, create temporary entry
-        const groupName = this.groupsMap[service.groupServiceId!] || 'Unknown Group';
+        const groupName = service.groupService?.groupName || 'Unknown Group';
         groupsMap.set(groupId, {
           groupId,
           groupName,

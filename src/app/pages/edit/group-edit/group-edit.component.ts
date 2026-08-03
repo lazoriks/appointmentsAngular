@@ -15,11 +15,11 @@ selector: 'app-group-edit',
 imports: [CommonModule, FormsModule],
 template: `
 <div class="card" *ngIf="group">
-<h2>Edit Group: {{ group.name }}</h2>
+<h2>Edit Group: {{ group.groupName }}</h2>
 
 
 <label>Group Name</label>
-<input [(ngModel)]="group.name" />
+<input [(ngModel)]="group.groupName" />
 
 
 <label>Description</label>

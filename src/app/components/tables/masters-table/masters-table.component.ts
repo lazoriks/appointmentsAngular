@@ -39,7 +39,7 @@ import { GroupService } from '../../../models/group-service.model';
               <td>{{ m.surname }}</td>
               <td>{{ m.phone || '-' }}</td>
               <td>{{ m.email || '-' }}</td>
-              <td>{{ groupsMap[m.groupServiceId!] || '-' }}</td>
+              <td>{{ m.groupService?.groupName || '-' }}</td>
 
               <td>
                 <button class="btn small" (click)="openEdit(m)">Edit</button>
@@ -75,7 +75,7 @@ export class MastersTableComponent implements OnInit {
       next: (g) => {
         this.groups = g;
         this.groupsMap = Object.fromEntries(
-          g.map(x => [x.id, x.name])
+          g.map(x => [x.id, x.groupName])
         );
       },
       error: (err) => console.error('Failed to load groups:', err)

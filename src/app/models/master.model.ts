@@ -5,6 +5,7 @@ export interface Master {
   email?: string;
   phone?: string;
   groupServiceId?: number;
+  groupService?: { id: number; groupName: string };
 
   // для бекенду
   services?: { id: number }[];

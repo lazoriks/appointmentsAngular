@@ -5,4 +5,5 @@ export interface ServiceModel {
   period: number;
   description?: string;
   groupServiceId?: number;
+  groupService?: { id: number; groupName: string };
 }

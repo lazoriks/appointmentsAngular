@@ -1,5 +1,5 @@
 export interface GroupService {
   id: number;
-  name: string;
+  groupName: string;
   description?: string; // якщо є в бекенді
 }

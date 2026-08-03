@@ -31,7 +31,7 @@ import { GroupService } from '../../../models/group-service.model';
           @for (g of rows; track g.id) {
             <tr>
               <td>{{ g.id }}</td>
-              <td>{{ g.name }}</td>
+              <td>{{ g.groupName }}</td>
               <td>{{ g.description || '-' }}</td>
 
               <td>
