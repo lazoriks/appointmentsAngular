@@ -2,6 +2,16 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.5.
 
+## Table of Contents
+
+- [Development server](#development-server)
+- [Code scaffolding](#code-scaffolding)
+- [Building](#building)
+- [Running unit tests](#running-unit-tests)
+- [Running end-to-end tests](#running-end-to-end-tests)
+- [Additional Resources](#additional-resources)
+- [Troubleshooting](#troubleshooting)
+
 ## Development server
 
 To start a local development server, run:
@@ -58,10 +68,14 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-## Has anyone come across error NG0908 and managed to resolve it?
+## Troubleshooting
 
-For Angular version 17, add the below code in the main.server.ts file and it will solve the issue.
+### Has anyone come across error NG0908 and managed to resolve it?
 
+For Angular version 17, add the following to `main.server.ts` and it will resolve the issue:
+
+```ts
 import 'zone.js';
+```
 
-Thank you. This worked for me. Specifically I made this change in src/polyfills.ts, as mentioned in another answer.
+> Thank you. This worked for me. Specifically I made this change in `src/polyfills.ts`, as mentioned in another answer.
