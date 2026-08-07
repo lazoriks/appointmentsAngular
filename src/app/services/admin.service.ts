@@ -9,6 +9,7 @@ import { Master } from '../models/master.model';
 import { ServiceModel } from '../models/service.model';
 import { GroupService } from '../models/group-service.model';
 import { Holiday } from '../models/holiday.model';
+import { SiteImage } from '../models/site-image.model';
 
 const BASE = `${environment.apiBase}/admin`;
 const HOLIDAYS_BASE = `${environment.apiBase}/holidays`;
@@ -136,5 +137,18 @@ export class AdminService {
 
   deleteHoliday(id: number) {
     return this.http.delete(`${HOLIDAYS_BASE}/${id}`);
+  }
+
+  // -------------------------
+  // SITE PHOTOS (shown on the WordPress home page)
+  // -------------------------
+  getSiteImages(): Observable<SiteImage[]> {
+    return this.http.get<SiteImage[]>(`${BASE}/site-images`);
+  }
+
+  uploadSiteImage(slot: string, file: File): Observable<SiteImage> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<SiteImage>(`${BASE}/site-images/${slot}`, form);
   }
 }

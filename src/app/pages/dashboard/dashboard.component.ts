@@ -4,9 +4,10 @@ import { ClientsTableComponent } from '../../components/tables/clients-table/cli
 import { MastersTableComponent } from '../../components/tables/masters-table/masters-table.component';
 import { ServicesTableComponent } from '../../components/tables/services-table/services-table.component';
 import { GroupsTableComponent } from '../../components/tables/groups-table/groups-table.component';
+import { SiteImagesComponent } from '../../components/tables/site-images/site-images.component';
 import { CommonModule } from '@angular/common';
 
-type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups';
+type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups' | 'photos';
 
 @Component({
   standalone: true,
@@ -17,7 +18,8 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups';
     ClientsTableComponent,
     MastersTableComponent,
     ServicesTableComponent,
-    GroupsTableComponent
+    GroupsTableComponent,
+    SiteImagesComponent
   ],
   template: `
     <div class="card">
@@ -27,6 +29,7 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups';
         <div class="tab" [class.active]="tab() === 'masters'" (click)="setTab('masters')">Masters</div>
         <div class="tab" [class.active]="tab() === 'services'" (click)="setTab('services')">Services</div>
         <div class="tab" [class.active]="tab() === 'groups'"   (click)="setTab('groups')">Groups</div>
+        <div class="tab" [class.active]="tab() === 'photos'"   (click)="setTab('photos')">Site Photos</div>
       </div>
 
       <ng-container [ngSwitch]="tab()">
@@ -35,6 +38,7 @@ type TabKey = 'appointments' | 'clients' | 'masters' | 'services' | 'groups';
         <app-masters-table *ngSwitchCase="'masters'"></app-masters-table>
         <app-services-table *ngSwitchCase="'services'"></app-services-table>
         <app-groups-table *ngSwitchCase="'groups'"></app-groups-table>
+        <app-site-images *ngSwitchCase="'photos'"></app-site-images>
       </ng-container>
     </div>
   `
