@@ -89,6 +89,7 @@ interface WeekGroup {
                       <th>#</th>
                       <th>Time</th>
                       <th>Client</th>
+                      <th>Mobile</th>
                       <th>Services</th>
                       <th>Sum</th>
                       <th>Created</th>
@@ -100,6 +101,10 @@ interface WeekGroup {
                       <td>{{ i + 1 }}</td>
                       <td>{{ a.datatime | date:'HH:mm' }}</td>
                       <td>{{ a.client?.firstName }} {{ a.client?.surname }}</td>
+                      <td>
+                        <a *ngIf="a.client?.mobile" href="tel:{{ a.client?.mobile }}">{{ a.client?.mobile }}</a>
+                        <span *ngIf="!a.client?.mobile">-</span>
+                      </td>
                       <td>{{ servicesToString(a) }}</td>
                       <td>{{ a.summ | number:'1.2-2' }} €</td>
                       <td>{{ a.date_created | date:'dd.MM.yy HH:mm' }}</td>
